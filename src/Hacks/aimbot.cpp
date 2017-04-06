@@ -7,7 +7,7 @@
 bool Settings::Aimbot::enabled = false;
 bool Settings::Aimbot::silent = false;
 bool Settings::Aimbot::friendly = false;
-Bone Settings::Aimbot::bone = Bone::BONE_HEAD;
+Bone Settings::Aimbot::bone = ::BONE_HEAD;
 ButtonCode_t Settings::Aimbot::aimkey = ButtonCode_t::MOUSE_MIDDLE;
 bool Settings::Aimbot::aimkeyOnly = false;
 bool Settings::Aimbot::Smooth::enabled = false;
@@ -226,36 +226,19 @@ C_BasePlayer* GetClosestPlayer(CUserCmd* cmd, bool visible, Bone& bestBone, floa
 	return closestEntity;
 }
 
-void Aimbot::RCS(QAngle& angle, C_BasePlayer* player, CUserCmd* cmd)
+void Aimbot::RCS()
 {
-	if (!Settings::Aimbot::RCS::enabled)
-		return;
-
-	if (!(cmd->buttons & IN_ATTACK))
-		return;
-
-	C_BasePlayer* localplayer = (C_BasePlayer*) entityList->GetClientEntity(engine->GetLocalPlayer());
-	QAngle CurrentPunch = *localplayer->GetAimPunchAngle();
-	bool isSilent = Settings::Aimbot::silent;
-	bool hasTarget = Settings::Aimbot::AutoAim::enabled && player && shouldAim;
-
-	if (!Settings::Aimbot::RCS::always_on && !hasTarget)
-		return;
-
-	if (isSilent || hasTarget)
+	if( G::UserCmd->buttons & IN_ATTACK ) 
 	{
-		angle.x -= CurrentPunch.x * Settings::Aimbot::RCS::valueX;
-		angle.y -= CurrentPunch.y * Settings::Aimbot::RCS::valueY;
-	}
-	else if (localplayer->GetShotsFired() > 1)
-	{
-		QAngle NewPunch = { CurrentPunch.x - RCSLastPunch.x, CurrentPunch.y - RCSLastPunch.y, 0 };
+		QAngle aimpunch = G::LocalPlayer->GetPunch() * 2.f;
 
-		angle.x -= NewPunch.x * Settings::Aimbot::RCS::valueX;
-		angle.y -= NewPunch.y * Settings::Aimbot::RCS::valueY;
-	}
+		G::UserCmd->viewangles += ( m_oldangle - aimpunch );
 
-	RCSLastPunch = CurrentPunch;
+		m_oldangle = aimpunch;
+	}
+	else {
+		m_oldangle.x = m_oldangle.y = m_oldangle.z = 0;
+	}
 }
 
 void Aimbot::AimStep(C_BasePlayer* player, QAngle& angle, CUserCmd* cmd)
